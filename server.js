@@ -44,6 +44,8 @@ const schema = buildSchema(`
 		userCreate(input:UserInput):User
 		userLogin(email:String!,password:String!):String
 		postCreate(title:String!,content:String!,token:String!):String
+		postUpdate(title:String!,content:String!,token:String!):String
+		postDelete(token:String!):String
 	}
 `)
 const userQueries = {
@@ -104,7 +106,28 @@ const postMutations = {
 		console.log('user',user)
 		await post.save();
 		return 'post created'
-	}
+	},
+	postUpdate: async ({ title, content, token, postId }) => {
+		const user = await auth(token);
+		const post = await Post.findOneAndUpdate(
+		  { userId: user.id, _id: postId },
+		  { title: title, content: content },
+		  { new: true }
+		);
+		if (!post) {
+		  return "Post is not found";
+		}
+		return "Post updated successfully";
+	  },
+	
+	  deletePost: async ({ token, postId }) => {
+		const user = await auth(token);
+		const post = await Post.findOneAndDelete({ _id: postId, userId: user.id });
+		if (!post) {
+		  return "Post is not found";
+		}
+		return "Post deleted successfully";
+	  }
 }
 const resolvers = {
 	...userQueries,
